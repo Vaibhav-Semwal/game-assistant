@@ -16,6 +16,18 @@ def handle_command(command_text: str) -> bool:
     speak(result['response'])
     return True
 
+def converse() -> bool:
+    while True:
+        audio = listen_once(timeout= settings.FOLLOWUP_LISTEN_SECONDS, phrase_time_limit=10)
+        if audio is None:
+            return True
+
+        text = transcribe_audio(audio)
+        if not text: 
+            continue 
+        if not handle_command(text):
+            return False
+
 def main():
     calibrate()
     print("AI Agent started.")
@@ -33,15 +45,13 @@ def main():
             except EOFError:
                 break
             typed = typed.strip()
-            if typed:
-                typed_input_queue.put(typed.lower())
+            if typed: typed_input_queue.put(typed.lower())
  
     threading.Thread(target=terminal_listener, daemon=True).start()
  
     running = True
     while running:
-        # 1. Check for typed input first (non-blocking) -- typing is
-        #    already an explicit action, so no wake word is required.
+        # 1. Check for typed input first (non-blocking) -- typing is already an explicit action, so no wake word is required.
         try:
             typed_text = typed_input_queue.get_nowait()
         except queue.Empty:
@@ -50,22 +60,20 @@ def main():
         if typed_text is not None:
             print(f"[Typed]: {typed_text}")
             running = handle_command(typed_text)
+            if running: running = converse()
             continue
  
         # 2. Otherwise, listen briefly for speech and require a wake word.
         audio = listen_once(timeout=1, phrase_time_limit=8)
-        if audio is None:
-            continue  # nothing heard in this window, loop back and check typed input again
+        if audio is None: continue  # nothing heard in this window, loop back and check typed input again
  
         text = transcribe_audio(audio)
-        if not text:
-            continue
+        if not text: continue
  
         print(f"[Heard]: {text}")
  
         wake_word, command_text = extract_command(text)
-        if wake_word is None:
-            continue  # no wake word in this phrase, keep listening passively
+        if wake_word is None: continue  # no wake word in this phrase, keep listening passively
  
         print(f"Wake word '{wake_word}' detected.")
  
@@ -82,6 +90,7 @@ def main():
                 continue
  
         running = handle_command(command_text)
+        if running: running = converse()
 
 # ---- TEXT ONLY MODE ----
 #

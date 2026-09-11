@@ -1,4 +1,4 @@
-from ...settings import settings
+from settings import settings
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 

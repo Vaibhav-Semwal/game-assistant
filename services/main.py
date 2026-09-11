@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-from ..settings import settings
+from settings import settings
 from duckduckgo_search import DDGS
 from langchain_core.documents import Document
 
