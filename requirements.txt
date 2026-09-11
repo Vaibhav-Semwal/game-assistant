@@ -1,7 +1,8 @@
 # --- CORE API ---
-python-dotenv              
-requests                    
+python-dotenv
+requests
 numpy
+plyer     
 
 # --- TTS & STT ---
 SpeechRecognition>=3.10

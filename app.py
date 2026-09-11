@@ -2,6 +2,7 @@ import queue
 import threading
 from speech.kokoro_tts import extract_command, speak
 from speech.stt import calibrate, listen_once, transcribe_audio
+from tools.alarm import start_watcher
 from settings import settings
 
 from agent.graph import graph
@@ -30,6 +31,7 @@ def converse() -> bool:
 
 def main():
     calibrate()
+    start_watcher(60)
     print("AI Agent started.")
     print(f"Listening for wake word(s): {', '.join(settings.WAKE_WORDS)} ...")
     print("You can also just type a command into the terminal at any time.\n")

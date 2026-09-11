@@ -11,8 +11,8 @@ SEARCH|<google search query>
 OPEN|<website URL>
 DISCORD|<channel>|<message>
 WHATSAPP|<recipient>|<message>
-ALARM|<time>|<alarm description>
-LIST_ALARM|<answer>
+ADD_ALARM|<time>|<alarm name/description>|<True/False>
+REMOVE_ALARM|<id>
 EMAIL|<email address>|<search query>
 RAG_MODE|<search_prompt>
 
@@ -33,8 +33,11 @@ DISCORD|general|hello
 User: Send John hello on WhatsApp
 WHATSAPP|John|hello
 
-User: Set an alarm for 8:30 AM
-ALARM|08:30|Alarm
+User: Set an alarm for 8:30 AM, make it persistent
+ALARM|08:30|Alarm|True
+
+User: Delete the alarm at index 4
+REMOVE_ALARM|4
 
 User: Check unread emails on test@gmail.com
 EMAIL|test@gmail.com|unread
@@ -49,7 +52,8 @@ Rules:
 - SAVE only when the user explicitly asks to save or remember something.
 - SEARCH when the user asks to search Google or the web.
 - OPEN when the user asks to open a website.
-- ALARM when the user asks to create or set an alarm.
+- ADD_ALARM when the user asks to create or set an alarm, add true if user asks it to be persistent else always false.
+- REMOVE_ALARM when user asks to delete an alarm at a set index.
 - EMAIL when the user asks to check an email inbox.
 - RAG_MODE when the user asks for help based on what is currently visible on their screen, especially while playing a game.
 - Otherwise use ANSWER.

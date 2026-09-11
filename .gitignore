@@ -1,5 +1,6 @@
 voices/
 venv/
+data/
 **/__pycache__/
 *.py[cod]
 
