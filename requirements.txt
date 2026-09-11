@@ -1,0 +1,40 @@
+# --- CORE API ---
+python-dotenv              
+requests                    
+numpy
+
+# --- TTS & STT ---
+SpeechRecognition>=3.10
+PyAudio>=0.2.13
+sounddevice>=0.4.6
+kokoro-onnx>=0.3.0
+
+# --- VECTOR DB & RETRIEVAL ---
+qdrant-client 
+langchain-qdrant
+flashrank                   
+
+# --- EMBEDDINGS (GEMINI/SENTENCE TRANSFORMERS) ---
+sentence-transformers       
+langchain_huggingface
+langchain_google_genai
+google-generativeai         
+langchain-google-genai      
+
+# --- LANGCHAIN & AGENTIC ORCHESTRATION ---
+langchain                   
+langgraph                   
+langchain-openai            
+langchain-google-vertexai   
+langchain-community         
+pydantic>=2.0.0             
+
+# --- TOOL API---
+sounddevice
+soundfile                 
+pillow                   
+mss                      
+
+# --- DATA INGESTION & PARSING ---
+beautifulsoup4              
+duckduckgo-search
