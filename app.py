@@ -2,7 +2,7 @@ import queue
 import threading
 from speech.kokoro_tts import extract_command, speak
 from speech.stt import calibrate, listen_once, transcribe_audio
-from services.settings import settings
+from settings import settings
 
 from agent.graph import graph
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from flashrank import Ranker, RerankRequest
 from langchain_core.documents import Document
-from ..settings import settings
+from ...settings import settings
 
 def rerank_documents(
     user_input: str,

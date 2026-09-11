@@ -7,10 +7,10 @@ load_dotenv()
 class Settings:
     # --- GEMINI & FALLBACK EMBEDDINGS ---
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    GEMINI_MODEL = "gemini-embedding-2-preview"
-    FALLBACK_MODEL = "all-mpnet-base-v2"
-    GEMINI_DIMENSIONS = 3072
-    FALLBACK_DIMENSIONS = 768
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL")
+    FALLBACK_MODEL = os.getenv("FALLBACK_MODEL")
+    GEMINI_DIMENSIONS = int(os.getenv("GEMINI_DIMENSIONS"))
+    FALLBACK_DIMENSIONS = int(os.getenv("FALLBACK_DIMENSIONS"))
 
     # --- VECTOR DB (QDRANT) ---
     QDRANT_URL = os.getenv("QDRANT_CLUSTER_ENDPOINT")
@@ -29,18 +29,18 @@ class Settings:
     LANGSMITH_ENDPOINT = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
 
     # --- CONSTANTS ---
-    DEFAULT_COLLECTION = "web_rag"
-    DEFAULT_SEARCH_RESULTS = 8
-    DEFAULT_RETRIEVAL_RESULTS = 12
-    DEFAULT_RERANK_RESULTS = 5
-    DEFAULT_CHUNK_SIZE = 1000
-    DEFAULT_CHUNK_OVERLAP = 150
+    DEFAULT_COLLECTION = os.getenv("DEFAULT_COLLECTION", "web_rag")
+    DEFAULT_SEARCH_RESULTS = int(os.getenv("DEFAULT_SEARCH_RESULTS", "8"))
+    DEFAULT_RETRIEVAL_RESULTS = int(os.getenv("DEFAULT_RETRIEVAL_RESULTS", "12"))
+    DEFAULT_RERANK_RESULTS = int(os.getenv("DEFAULT_RERANK_RESULTS", "5"))
+    DEFAULT_CHUNK_SIZE = int(os.getenv("DEFAULT_CHUNK_SIZE", "1000"))
+    DEFAULT_CHUNK_OVERLAP = int(os.getenv("DEFAULT_CHUNK_OVERLAP", "150"))
 
-    WAKE_WORDS = ["jarvis", "model"]
-    KOKORO_MODEL_PATH = "voices/kokoro-v1.0.onnx"     
-    KOKORO_VOICES_PATH = "voices/voices-v1.0.bin"
-    KOKORO_VOICE = "bm_george"                      
-    KOKORO_SPEED = 1.0
+    WAKE_WORDS = os.getenv("WAKE_WORDS", "jarvis,model").split(",")
+    KOKORO_MODEL_PATH = os.getenv("KOKORO_MODEL_PATH", "voices/kokoro-v1.0.onnx")
+    KOKORO_VOICES_PATH = os.getenv("KOKORO_VOICES_PATH", "voices/voices-v1.0.bin")
+    KOKORO_VOICE = os.getenv("KOKORO_VOICE", "bm_george")
+    KOKORO_SPEED = float(os.getenv("KOKORO_SPEED", "1.0"))
 
 
 # Apply LangChain environment variables for automatic tracing

@@ -3,7 +3,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from services.retrieval.embedding import Embedder
 from utils.helpers import parse_decision, TOOL_HANDLERS
 from .agent_state import AgentState
-from services.settings import settings
+from settings import settings
 from .nodes import (
     chunk,
     tool,

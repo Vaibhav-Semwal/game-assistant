@@ -2,7 +2,7 @@ import re
 import numpy as np
 import sounddevice as sd
 from kokoro_onnx import Kokoro
-from services.settings import settings
+from settings import settings
 
 kokoro = Kokoro(settings.KOKORO_MODEL_PATH, settings.KOKORO_VOICES_PATH)
 

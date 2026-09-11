@@ -1,5 +1,5 @@
 from ..agent_state import AgentState
-from services.settings import settings
+from settings import settings
 from services.main import fetch_search_results, search_web
 from services.retrieval import qdrant_service, embedding
 

@@ -1,4 +1,4 @@
-from services.settings import settings
+from settings import settings
 from ..agent_state import AgentState
 from services.retrieval import ranking_service, qdrant_service
 from flashrank import Ranker
