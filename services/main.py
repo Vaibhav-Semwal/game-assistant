@@ -59,7 +59,7 @@ def fetch_search_results(search_results: list[dict[str, str]]) -> list[Document]
     documents: list[Document] = []
     for result in search_results:
         try:
-            content = fetch_webpage(result["url"])
+            content = _fetch_webpage(result["url"])
             if not content: continue
             documents.append(Document(
                 page_content=content,
