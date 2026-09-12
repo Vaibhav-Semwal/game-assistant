@@ -3,6 +3,7 @@ import numpy as np
 import sounddevice as sd
 from kokoro_onnx import Kokoro
 from settings import settings
+from ui.assistant.hud import ui_set_state
 
 kokoro = Kokoro(settings.KOKORO_MODEL_PATH, settings.KOKORO_VOICES_PATH)
 
@@ -12,6 +13,7 @@ def speak(text: str) -> None:
     if not text.strip():
         return
     cleaned_text = re.sub(r'[^\w\s,]', '', text)
+    ui_set_state("speaking", text)
     samples, sample_rate = kokoro.create(cleaned_text, voice= settings.KOKORO_VOICE, speed= settings.KOKORO_SPEED, lang="en-us")
     sd.play(np.array(samples), sample_rate)
     sd.wait()

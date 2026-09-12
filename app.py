@@ -1,11 +1,13 @@
 import queue
 import threading
+
 from speech.kokoro_tts import extract_command, speak
 from speech.stt import calibrate, listen_once, transcribe_audio
 from tools.alarm import start_watcher
 from settings import settings
 
 from agent.graph import graph
+from ui.assistant.hud import create_overlay, ui_set_state,  ui_shutdown
 
 def handle_command(command_text: str) -> bool:
     if "stop" in command_text or "exit" in command_text:
@@ -19,8 +21,10 @@ def handle_command(command_text: str) -> bool:
 
 def converse() -> bool:
     while True:
+        ui_set_state("listening")
         audio = listen_once(timeout= settings.FOLLOWUP_LISTEN_SECONDS, phrase_time_limit=10)
         if audio is None:
+            ui_set_state("idle")
             return True
 
         text = transcribe_audio(audio)
@@ -66,6 +70,7 @@ def main():
             continue
  
         # 2. Otherwise, listen briefly for speech and require a wake word.
+        ui_set_state("idle")
         audio = listen_once(timeout=1, phrase_time_limit=8)
         if audio is None: continue  # nothing heard in this window, loop back and check typed input again
  
@@ -80,8 +85,8 @@ def main():
         print(f"Wake word '{wake_word}' detected.")
  
         if not command_text:
-            # Wake word was said alone -- ask for the command separately.
             speak("Yes? I'm listening.")
+            ui_set_state("listening")
             command_audio = listen_once(timeout=6, phrase_time_limit=10)
             if command_audio is None:
                 speak("I didn't catch that.")
@@ -93,18 +98,12 @@ def main():
  
         running = handle_command(command_text)
         if running: running = converse()
-
-# ---- TEXT ONLY MODE ----
-#
-# def main(): 
-#     print("AI Agent started.\n")   
-#     while True: 
-#         command_text = str(input("[USER]:"))
-#         if "stop" in command_text or "exit" in command_text:
-#             print("Goodbye.")
-#             return False
-#         result = graph.invoke({"user_input": command_text})
-#         print(f"[AGENT]: {result['response']}\n")
+    ui_shutdown()
 
 if __name__ == "__main__":
-    main()
+    assistant_thread = threading.Thread(target=main, daemon=True)
+    assistant_thread.start()
+
+    overlay = create_overlay() 
+    overlay.run()  
+    print("\nStopped.")

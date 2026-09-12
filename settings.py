@@ -42,7 +42,7 @@ class Settings:
     KOKORO_VOICE = os.getenv("KOKORO_VOICE", "bm_george")
     KOKORO_SPEED = float(os.getenv("KOKORO_SPEED", "1.0"))
 
-    FOLLOWUP_LISTEN_SECONDS = int(os.getenv("FOLLOWUP_LISTEN_SECONDS", "15"))
+    FOLLOWUP_LISTEN_SECONDS = int(os.getenv("FOLLOWUP_LISTEN_SECONDS", "5"))
 
 
 # Apply LangChain environment variables for automatic tracing
