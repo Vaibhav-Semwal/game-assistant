@@ -25,8 +25,9 @@ def handle_open(payload):
     return open_website(payload)
 
 def handle_email(payload):
-    email_address, query = split_payload(payload, 2)
-    return check_email(email_address,query)
+    result = check_email() if payload == "None" else check_email(int(payload))
+    return result
+
 
 # alarm handlers 
 

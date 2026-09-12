@@ -44,6 +44,12 @@ class Settings:
 
     FOLLOWUP_LISTEN_SECONDS = int(os.getenv("FOLLOWUP_LISTEN_SECONDS", "5"))
 
+    GMAIL_ACCOUNTS = os.getenv("GMAIL_ACCOUNTS","")
+    IMAP_HOST = os.getenv("IMAP_HOST","imap.gmail.com")
+    IMAP_PORT = int(os.getenv("IMAP_PORT","993"))
+
+    INTERRUPT_KEY = "m"
+
 
 # Apply LangChain environment variables for automatic tracing
 os.environ["LANGCHAIN_TRACING_V2"] = os.getenv("LANGSMITH_TRACING", "true")

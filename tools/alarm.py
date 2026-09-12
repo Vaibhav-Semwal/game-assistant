@@ -81,7 +81,7 @@ def remove_alarm(alarm_id):
     return f"Removed Alarm #{alarm_id}"
 
 def start_watcher(poll=60):
-    """Run the watcher on a background daemon thread; returns immediately."""
+
     global _thread
     if _thread and _thread.is_alive():
         return _thread

@@ -1,64 +1,58 @@
-import os
 import imaplib
-import email as email_lib
-from email.header import decode_header
+import os
+from typing import List
 
-# Set env vars: EMAIL_PASSWORD, and optionally EMAIL_IMAP_SERVER
-# (defaults to Gmail's IMAP server).
-def check_email(email_address: str, query: str):
-    """
-    Logs into the mailbox for `email_address` via IMAP and searches for
-    messages matching `query` (searches subject and body).
-    Returns a list of dicts with subject, from, date, and a snippet.
-    """
-    password = os.environ.get("EMAIL_PASSWORD")
-    if not password:
-        raise EnvironmentError("EMAIL_PASSWORD environment variable not set")
+from settings import settings
+from services.email.client import Account,EmailSummary,GmailClient
 
-    imap_server = os.environ.get("EMAIL_IMAP_SERVER", "imap.gmail.com")
 
-    results = []
-    with imaplib.IMAP4_SSL(imap_server) as mail:
-        mail.login(email_address, password)
-        mail.select("inbox")
+def load_accounts_from_env() -> List[Account]:
+    accounts = []
+    for entry in filter(None, (e.strip() for e in settings.GMAIL_ACCOUNTS.split(","))):
+        parts = entry.split(":")
+        if len(parts) == 3:
+            label, address, password = parts
+        elif len(parts) == 2:
+            label, (address, password) = "", parts
+        else:
+            print(f"WARNING: Skipping malformed account entry: {entry}")
+            continue
+        accounts.append(Account(address=address, app_password=password, label=label))
+    print("accounts: ", accounts)
+    return accounts
 
-        search_criteria = f'(OR SUBJECT "{query}" BODY "{query}")'
-        status, data = mail.search(None, search_criteria)
-        if status != "OK":
-            return results
 
-        for num in data[0].split():
-            status, msg_data = mail.fetch(num, "(RFC822)")
-            if status != "OK":
-                continue
+def fetch_all(accounts: List[Account], limit: int = 10) -> List[EmailSummary]:
 
-            msg = email_lib.message_from_bytes(msg_data[0][1])
+    all_summaries: List[EmailSummary] = []
+    for account in accounts:
+        try:
+            with GmailClient(account) as client:
+                summaries = client.fetch_recent(limit=limit)
+                all_summaries.extend(summaries)
+                print(f"INFO: Fetched {len(summaries)} emails from {account.display_name}")
+        except imaplib.IMAP4.error as e:
+            print(f"ERROR: Auth/IMAP error for {account.display_name}: {e} (use an App Password, not your login password)")
+        except Exception as e:
+            print(f"ERROR: Failed to fetch from {account.display_name}: {e}")
+    return all_summaries
 
-            subject, encoding = decode_header(msg.get("Subject", ""))[0]
-            if isinstance(subject, bytes):
-                subject = subject.decode(encoding or "utf-8", errors="ignore")
 
-            from_ = msg.get("From", "")
-            date_ = msg.get("Date", "")
+def format_summaries(summaries: List[EmailSummary]) -> str:
+    lines = []
+    for s in summaries:
+        lines.append(f"\nemail From: {s.sender}")
+        lines.append(f"  on Subject: {s.subject}")
+        lines.append(f"  at : {s.date}")
+    return "\n".join(lines)
 
-            snippet = ""
-            if msg.is_multipart():
-                for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
-                        payload = part.get_payload(decode=True)
-                        if payload:
-                            snippet = payload.decode(errors="ignore")[:200]
-                            break
-            else:
-                payload = msg.get_payload(decode=True)
-                if payload:
-                    snippet = payload.decode(errors="ignore")[:200]
 
-            results.append({
-                "subject": subject,
-                "from": from_,
-                "date": date_,
-                "snippet": snippet,
-            })
-
-    return results
+def check_email(limit: int = 5):
+    accounts = load_accounts_from_env()
+ 
+    if not accounts:
+        return "No accounts configured"
+    else:
+        results = fetch_all(accounts, limit)
+        ans = format_summaries(results)
+        return ans
