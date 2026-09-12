@@ -2,6 +2,7 @@ from tools.search import open_website, web_search
 from tools.alarm import add_alarm, remove_alarm
 from tools.notes import save_note, read_note
 from tools.email import check_email
+from tools.app_help import open_app
 
 def parse_decision(decision: str):
     action, _ , payload = decision.partition("|")
@@ -18,6 +19,9 @@ def split_payload(payload: str, count: int):
 def handle_save(payload):
     return save_note(payload)
 
+def handle_read(payload):
+    return read_note()
+
 def handle_search(payload):
     return web_search(payload)
 
@@ -28,6 +32,8 @@ def handle_email(payload):
     result = check_email() if payload == "None" else check_email(int(payload))
     return result
 
+def handle_app_opening(payload):
+    return open_app(payload)
 
 # alarm handlers 
 
@@ -41,9 +47,11 @@ def handle_remove_alarm(payload):
 
 TOOL_HANDLERS = {
     "SAVE": handle_save,
+    "READ": handle_read,
     "SEARCH": handle_search,
     "OPEN": handle_open,
     "ADD_ALARM": handle_add_alarm,
     "REMOVE_ALARM": handle_remove_alarm,
+    "APP": handle_app_opening,
     "EMAIL": handle_email,
 }
