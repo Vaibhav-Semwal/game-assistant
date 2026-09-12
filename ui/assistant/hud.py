@@ -4,7 +4,7 @@ import math
 import signal
 import sys
 
-from PySide6.QtCore import QRect, Qt, QTimer, Signal
+from PySide6.QtCore import QEasingCurve, QParallelAnimationGroup, QPoint, QPropertyAnimation, QRect, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter
 from PySide6.QtWidgets import QApplication, QWidget
 
@@ -13,6 +13,8 @@ BAR_BOX_HEIGHT = 46
 RADIUS = 20
 BARS = 20
 REFRESH_MS = 50
+ANIM_MS = 180
+SLIDE = 10
 
 TEXT_BOX_GAP = 8
 TEXT_BOX_PADDING = 10
@@ -32,49 +34,73 @@ class StatusOverlay(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
 
         screen = QApplication.primaryScreen().geometry()
-        self._top_y = 14
-        self._center_x = screen.width() // 2
-        self.resize(WIDTH, BAR_BOX_HEIGHT)
-        self.move(self._center_x - WIDTH // 2, self._top_y)
+        self._x = screen.width() // 2 - WIDTH // 2
+        self._y = 14
+        self.move(self._x, self._y)
+        self.setWindowOpacity(0.0)
 
         self.state = "idle"
         self.text = ""
         self.phase = 0
         self._text_box_height = 0
+        self._visible = False
+
+        self._opacity_anim = QPropertyAnimation(self, b"windowOpacity")
+        self._pos_anim = QPropertyAnimation(self, b"pos")
+        for anim in (self._opacity_anim, self._pos_anim):
+            anim.setDuration(ANIM_MS)
+            anim.setEasingCurve(QEasingCurve.OutCubic)
+
+        self._anim_group = QParallelAnimationGroup(self)
+        self._anim_group.addAnimation(self._opacity_anim)
+        self._anim_group.addAnimation(self._pos_anim)
+        self._anim_group.finished.connect(lambda: self.hide() if not self._visible else None)
 
         self._state_changed.connect(self._apply_state)
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tick)
         self.timer.start(REFRESH_MS)
-
         self.hide()
 
     def _text_box_height_for(self, text: str) -> int:
         if not text:
             return 0
         metrics = QFontMetrics(TEXT_FONT)
-        available_width = WIDTH - 2 * TEXT_BOX_PADDING
         bounds = metrics.boundingRect(
-            QRect(0, 0, available_width, 10_000),
+            QRect(0, 0, WIDTH - 2 * TEXT_BOX_PADDING, 10_000),
             Qt.TextWordWrap | Qt.AlignCenter,
             text,
         )
         return bounds.height() + 2 * TEXT_BOX_PADDING
+
+    def _animate(self, y: int, opacity: float) -> None:
+        self._anim_group.stop()
+        self._opacity_anim.setStartValue(self.windowOpacity())
+        self._opacity_anim.setEndValue(opacity)
+        self._pos_anim.setStartValue(self.pos())
+        self._pos_anim.setEndValue(QPoint(self._x, y))
+        self._anim_group.start()
 
     def _apply_state(self, state: str, text: str) -> None:
         self.state = state
         self.text = text if (state == "speaking" and text) else ""
         self._text_box_height = self._text_box_height_for(self.text)
 
-        total_height = BAR_BOX_HEIGHT
-        if self._text_box_height:
-            total_height += TEXT_BOX_GAP + self._text_box_height
+        extra = TEXT_BOX_GAP + self._text_box_height if self._text_box_height else 0
+        self.resize(WIDTH, BAR_BOX_HEIGHT + extra)
 
-        self.resize(WIDTH, total_height)
-        self.move(self._center_x - WIDTH // 2, self._top_y)
+        if state == "idle":
+            if self._visible:
+                self._visible = False
+                self._animate(self._y - SLIDE, 0.0)
+        elif not self._visible:
+            self._visible = True
+            self.move(self._x, self._y - SLIDE)
+            self.setWindowOpacity(0.0)
+            self.show()
+            self._animate(self._y, 1.0)
 
-        self.show() if state != "idle" else self.hide()
         self.update()
 
     def _tick(self) -> None:
@@ -96,24 +122,19 @@ class StatusOverlay(QWidget):
             mid_y = BAR_BOX_HEIGHT / 2
             painter.setBrush(color)
             for i in range(BARS):
-                amp = 20 * abs(math.sin(self.phase * 0.25 + i * 0.4))
+                amp = 16 * abs(math.sin(self.phase * 0.25 + i * 0.4))
                 x = i * bar_w + 2
                 painter.drawRoundedRect(x, mid_y - amp / 2, bar_w - 4, max(amp, 3), 2, 2)
 
         if self._text_box_height:
-            text_box_top = BAR_BOX_HEIGHT + TEXT_BOX_GAP
+            top = BAR_BOX_HEIGHT + TEXT_BOX_GAP
             painter.setBrush(TEXT_BG_COLOR)
-            painter.drawRoundedRect(0, text_box_top, WIDTH, self._text_box_height, RADIUS, RADIUS)
-
+            painter.drawRoundedRect(0, top, WIDTH, self._text_box_height, RADIUS, RADIUS)
             painter.setPen(QColor("white"))
             painter.setFont(TEXT_FONT)
             painter.drawText(
-                QRect(
-                    TEXT_BOX_PADDING,
-                    text_box_top + TEXT_BOX_PADDING,
-                    WIDTH - 2 * TEXT_BOX_PADDING,
-                    self._text_box_height - 2 * TEXT_BOX_PADDING,
-                ),
+                QRect(TEXT_BOX_PADDING, top + TEXT_BOX_PADDING,
+                      WIDTH - 2 * TEXT_BOX_PADDING, self._text_box_height - 2 * TEXT_BOX_PADDING),
                 Qt.AlignCenter | Qt.TextWordWrap,
                 self.text,
             )
@@ -131,14 +152,11 @@ _keepalive_timer: "QTimer | None" = None
 
 def create_overlay() -> StatusOverlay:
     global _overlay, _keepalive_timer
-
     app = QApplication.instance() or QApplication(sys.argv)
-
     signal.signal(signal.SIGINT, lambda *_: app.quit())
     _keepalive_timer = QTimer()
     _keepalive_timer.timeout.connect(lambda: None)
     _keepalive_timer.start(200)
-
     _overlay = StatusOverlay()
     return _overlay
 
