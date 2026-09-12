@@ -27,6 +27,7 @@ COLORS = {"listening": QColor("#00e0ff"), "speaking": QColor("#7CFF6B")}
 
 class StatusOverlay(QWidget):
     _state_changed = Signal(str, str)
+    _quit_requested = Signal()
 
     def __init__(self):
         super().__init__()
@@ -57,6 +58,7 @@ class StatusOverlay(QWidget):
         self._anim_group.finished.connect(lambda: self.hide() if not self._visible else None)
 
         self._state_changed.connect(self._apply_state)
+        self._quit_requested.connect(QApplication.instance().quit)
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tick)
@@ -167,6 +169,9 @@ def ui_set_state(state: str, text: str | None = None) -> None:
 
 
 def ui_shutdown() -> None:
+    if _overlay is not None:
+        _overlay._quit_requested.emit()
+        return
     app = QApplication.instance()
     if app is not None:
         app.quit()
